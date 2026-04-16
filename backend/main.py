@@ -10,11 +10,11 @@ import mammoth
 import uuid
 import re
 from datetime import datetime
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email.mime.text import MIMEText
-from email import encoders
+# import smtplib
+# from email.mime.multipart import MIMEMultipart
+# from email.mime.base import MIMEBase
+# from email.mime.text import MIMEText
+# from email import encoders
 from typing import Optional
 import html
 
@@ -34,11 +34,14 @@ from fastapi import BackgroundTasks
 from dotenv import load_dotenv
 import cloudinary
 import cloudinary.uploader
+import requests
 
 load_dotenv()
 
 print("MONGO_URL:", os.getenv("MONGO_URL"))
 print("EMAIL_USER:", os.getenv("EMAIL_USER"))
+print("EMAIL_PASS:", os.getenv("EMAIL_PASS"))  # ✅ ADD HERE
+print("SENDER_EMAIL:", os.getenv("SENDER_EMAIL"))
 
 app = FastAPI()
 
@@ -51,6 +54,12 @@ cloudinary.config(
     api_key=os.getenv("CLOUDINARY_API_KEY"),
     api_secret=os.getenv("CLOUDINARY_API_SECRET")
 )
+
+
+print("===== CLOUDINARY DEBUG =====")
+print("Cloud Name:", os.getenv("CLOUDINARY_CLOUD_NAME"))
+print("API Key:", os.getenv("CLOUDINARY_API_KEY"))
+print("============================")
 
 
 # admin login password
@@ -150,39 +159,251 @@ def format_phone(phone):
     return f"+{phone}"
 
 
+# def send_email(name, email, phone, company, message, file_path):
+
+#     # sender_email = "no-reply@candidrp.com" -- Required App password setup for this email
+#     # receiver_email = "hr@candidrp.com"
+
+#     # sender_email = "deveshsharma.sap@gmail.com"
+#     # receiver_email = "deveshsharma9958@gmail.com"
+
+#     sender_email = os.getenv("SENDER_EMAIL")
+#     receiver_email = os.getenv("EMAIL_RECEIVER")
+
+#     msg = MIMEMultipart()
+#     # msg["From"] = "Candid Resourcing Partners <deveshsharma.sap@gmail.com>"
+
+#     msg["From"] = f"Candid Resourcing Partners <{sender_email}>"
+#     msg["Sender"] = sender_email
+#     msg["Reply-To"] = email
+#     msg["To"] = receiver_email
+#     msg["Subject"] = f"New Enquiry from {name} | Candid Website"
+
+#     formatted_message = message.replace("\n", "<br>")
+#     formatted_phone = format_phone(phone)
+
+#     attachment_note = (
+#         """
+#     <p style="margin-top: 20px; font-size: 14px; color: gray;">
+#     📎 Resume/CV attached with this email
+#     </p>
+#     """
+#         if file_path
+#         else ""
+#     )
+
+#     html_body = f"""
+#     <html>
+#     <body style="font-family: Arial, sans-serif; background-color: #f4f6f8; padding: 20px;">
+        
+#         <div style="max-width: 600px; margin: auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        
+#         <!-- Header -->
+#         <div style="background: linear-gradient(90deg, #4e0f89, #6c2bd9); color: white; padding: 20px;">
+#             <h2 style="margin: 0;">New Contact Form Submission</h2>
+#             <p style="margin: 5px 0 0;">Candid Resourcing Partners</p>
+#         </div>
+
+#         <!-- Content -->
+#         <div style="padding: 20px;">
+            
+#             <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+#                 <tr>
+#                     <td style="padding: 10px; font-weight: bold; width: 30%; vertical-align: top;">
+#                         Name:
+#                     </td>
+#                     <td style="padding: 10px; word-break: break-word;">
+#                         {name}
+#                     </td>
+#                 </tr>
+
+#                 <tr style="background: #f9f9f9;">
+#                     <td style="padding: 10px; font-weight: bold; vertical-align: top;">
+#                         Email:
+#                     </td>
+#                     <td style="padding: 10px; word-break: break-word;">
+#                         {email}
+#                     </td>
+#                 </tr>
+                
+                
+                
+
+#                 <tr>
+#                     <td style="padding: 10px; font-weight: bold; vertical-align: top;">
+#                         Phone:
+#                     </td>
+#                     <td style="padding: 10px; word-break: break-word;">
+#                         {formatted_phone}
+#                     </td>
+#                 </tr>
+
+#                 <tr style="background: #f9f9f9;">
+#                     <td style="padding: 10px; font-weight: bold; vertical-align: top;">
+#                         Company:
+#                     </td>
+#                     <td style="padding: 10px; word-break: break-word;">
+#                         {company}
+#                     </td>
+#                 </tr>
+#             </table>
+
+#             <!-- Message -->
+#             <div style="margin-top: 20px;">
+#             <h3 style="margin-bottom: 5px;">Message</h3>
+#             <div style="background: #f4f6f8; padding: 15px; border-radius: 6px;">
+#                 {formatted_message}
+#             </div>
+#             </div>
+
+#             <!-- Attachment Note -->
+#             {attachment_note}
+            
+
+#         </div>
+
+#         <!-- Footer -->
+#         <div style="background: #f4f6f8; padding: 15px; text-align: center; font-size: 12px; color: gray;">
+#             This email was sent from Candid Website Contact Form
+#         </div>
+
+#         </div>
+
+#     </body>
+#     </html>
+#     """
+#     msg.attach(MIMEText(html_body, "html"))
+
+#     # 📎 Attach file
+#     if file_path:
+#         with open(file_path, "rb") as f:
+#             part = MIMEBase("application", "octet-stream")
+#             part.set_payload(f.read())
+
+#         encoders.encode_base64(part)
+#         filename = os.path.basename(file_path)
+
+#         part.add_header("Content-Disposition", f"attachment; filename={filename}")
+
+#         msg.attach(part)
+
+#     # SMTP
+#     # server = smtplib.SMTP("smtp.gmail.com", 587)
+#     # server.starttls()
+
+#     # # app_password = "tvqh bmwp yezh djoh"
+#     # app_password = os.getenv("EMAIL_PASS")
+
+#     # server.login(sender_email, app_password.replace(" ", ""))
+    
+#     server = None
+
+#     try:
+#         server = smtplib.SMTP(
+#             os.getenv("SMTP_HOST"),
+#             int(os.getenv("SMTP_PORT")),
+#             timeout=10
+#         )
+#         server.starttls()
+
+#         server.login(
+#             os.getenv("EMAIL_USER"),
+#             os.getenv("EMAIL_PASS")
+#         )
+
+#         server.send_message(msg)
+
+#     except Exception as e:
+#         print("❌ Email error:", str(e))
+
+#     finally:
+#         if server:
+#             server.quit()
+            
+#     print("✅ Email sent successfully to", receiver_email)
+
+#     # 🔥 DELETE FILE AFTER EMAIL
+#     if file_path and os.path.exists(file_path):
+#         os.remove(file_path)
+
+
+# def send_email(name, email, phone, company, message, file_path):
+
+#     import requests
+
+#     url = "https://api.brevo.com/v3/smtp/email"
+
+#     headers = {
+#         "accept": "application/json",
+#         "api-key": os.getenv("EMAIL_PASS"),  # Brevo API Key
+#         "content-type": "application/json"
+#     }
+
+#     html_content = f"""
+#     <html>
+#         <body>
+#             <h2>New Contact Form Submission</h2>
+#             <p><b>Name:</b> {name}</p>
+#             <p><b>Email:</b> {email}</p>
+#             <p><b>Phone:</b> {phone}</p>
+#             <p><b>Company:</b> {company}</p>
+#             <p><b>Message:</b><br>{message}</p>
+#         </body>
+#     </html>
+#     """
+
+#     data = {
+#         "sender": {
+#             "name": "Candid Resourcing Partners",
+#             "email": os.getenv("SENDER_EMAIL")
+#         },
+#         "to": [
+#             {
+#                 "email": os.getenv("EMAIL_RECEIVER")
+#             }
+#         ],
+#         "subject": f"New Enquiry from {name}",
+#         "htmlContent": html_content
+#     }
+
+#     try:
+#         response = requests.post(url, json=data, headers=headers)
+#         print("✅ Brevo API:", response.status_code, response.text)
+
+#     except Exception as e:
+#         print("❌ Email API error:", str(e))
+
+
 def send_email(name, email, phone, company, message, file_path):
+    import requests
+    import base64
+    import os
 
-    # sender_email = "no-reply@candidrp.com" -- Required App password setup for this email
-    # receiver_email = "hr@candidrp.com"
+    url = "https://api.brevo.com/v3/smtp/email"
 
-    # sender_email = "deveshsharma.sap@gmail.com"
-    # receiver_email = "deveshsharma9958@gmail.com"
-
-    sender_email = os.getenv("EMAIL_USER")
-    receiver_email = os.getenv("EMAIL_RECEIVER")
-
-    msg = MIMEMultipart()
-    # msg["From"] = "Candid Resourcing Partners <deveshsharma.sap@gmail.com>"
-
-    msg["From"] = f"Candid Resourcing Partners <{sender_email}>"
-    msg["Reply-To"] = email
-    msg["To"] = receiver_email
-    msg["Subject"] = f"New Enquiry from {name} | Candid Website"
+    headers = {
+        "accept": "application/json",
+        "api-key": os.getenv("EMAIL_PASS"),  # ✅ your working key
+        "content-type": "application/json"
+    }
 
     formatted_message = message.replace("\n", "<br>")
-    formatted_phone = format_phone(phone)
+
+    # ✅ FIX (avoid crash if phone empty)
+    formatted_phone = phone if phone else "N/A"
 
     attachment_note = (
         """
-    <p style="margin-top: 20px; font-size: 14px; color: gray;">
-    📎 Resume/CV attached with this email
-    </p>
-    """
+        <p style="margin-top: 20px; font-size: 14px; color: gray;">
+        📎 Resume/CV attached with this email
+        </p>
+        """
         if file_path
         else ""
     )
 
-    html_body = f"""
+    # ✅ YOUR SAME DESIGN (NO CHANGE)
+    html_content = f"""
     <html>
     <body style="font-family: Arial, sans-serif; background-color: #f4f6f8; padding: 20px;">
         
@@ -197,58 +418,37 @@ def send_email(name, email, phone, company, message, file_path):
         <!-- Content -->
         <div style="padding: 20px;">
             
-            <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+            <table style="width: 100%; border-collapse: collapse;">
                 <tr>
-                    <td style="padding: 10px; font-weight: bold; width: 30%; vertical-align: top;">
-                        Name:
-                    </td>
-                    <td style="padding: 10px; word-break: break-word;">
-                        {name}
-                    </td>
+                    <td style="padding: 10px; font-weight: bold; width: 30%;">Name:</td>
+                    <td style="padding: 10px;">{name}</td>
                 </tr>
 
                 <tr style="background: #f9f9f9;">
-                    <td style="padding: 10px; font-weight: bold; vertical-align: top;">
-                        Email:
-                    </td>
-                    <td style="padding: 10px; word-break: break-word;">
-                        {email}
-                    </td>
+                    <td style="padding: 10px; font-weight: bold;">Email:</td>
+                    <td style="padding: 10px;">{email}</td>
                 </tr>
-                
-                
-                
 
                 <tr>
-                    <td style="padding: 10px; font-weight: bold; vertical-align: top;">
-                        Phone:
-                    </td>
-                    <td style="padding: 10px; word-break: break-word;">
-                        {formatted_phone}
-                    </td>
+                    <td style="padding: 10px; font-weight: bold;">Phone:</td>
+                    <td style="padding: 10px;">{formatted_phone}</td>
                 </tr>
 
                 <tr style="background: #f9f9f9;">
-                    <td style="padding: 10px; font-weight: bold; vertical-align: top;">
-                        Company:
-                    </td>
-                    <td style="padding: 10px; word-break: break-word;">
-                        {company}
-                    </td>
+                    <td style="padding: 10px; font-weight: bold;">Company:</td>
+                    <td style="padding: 10px;">{company}</td>
                 </tr>
             </table>
 
             <!-- Message -->
             <div style="margin-top: 20px;">
-            <h3 style="margin-bottom: 5px;">Message</h3>
-            <div style="background: #f4f6f8; padding: 15px; border-radius: 6px;">
-                {formatted_message}
-            </div>
+                <h3>Message</h3>
+                <div style="background: #f4f6f8; padding: 15px; border-radius: 6px;">
+                    {formatted_message}
+                </div>
             </div>
 
-            <!-- Attachment Note -->
             {attachment_note}
-            
 
         </div>
 
@@ -262,36 +462,41 @@ def send_email(name, email, phone, company, message, file_path):
     </body>
     </html>
     """
-    msg.attach(MIMEText(html_body, "html"))
 
-    # 📎 Attach file
-    if file_path:
+    data = {
+        "sender": {
+            "name": "Candid Resourcing Partners",
+            "email": os.getenv("SENDER_EMAIL")
+        },
+        "to": [
+            {
+                "email": os.getenv("EMAIL_RECEIVER")
+            }
+        ],
+        "subject": f"New Enquiry from {name} | Candid Website",
+        "htmlContent": html_content
+    }
+
+    # ✅ ATTACHMENT SUPPORT
+    if file_path and os.path.exists(file_path):
         with open(file_path, "rb") as f:
-            part = MIMEBase("application", "octet-stream")
-            part.set_payload(f.read())
+            encoded_file = base64.b64encode(f.read()).decode()
 
-        encoders.encode_base64(part)
-        filename = os.path.basename(file_path)
+        data["attachment"] = [{
+            "content": encoded_file,
+            "name": os.path.basename(file_path)
+        }]
 
-        part.add_header("Content-Disposition", f"attachment; filename={filename}")
+    try:
+        response = requests.post(url, json=data, headers=headers)
+        print("✅ Brevo API:", response.status_code, response.text)
 
-        msg.attach(part)
+    except Exception as e:
+        print("❌ Email API error:", str(e))
 
-    # SMTP
-    server = smtplib.SMTP("smtp.gmail.com", 587)
-    server.starttls()
-
-    # app_password = "tvqh bmwp yezh djoh"
-    app_password = os.getenv("EMAIL_PASS")
-
-    server.login(sender_email, app_password.replace(" ", ""))
-    server.send_message(msg)
-    server.quit()
-
-    # 🔥 DELETE FILE AFTER EMAIL
+    # ✅ CLEANUP
     if file_path and os.path.exists(file_path):
         os.remove(file_path)
-
 
 
 
@@ -758,10 +963,3 @@ def delete_notification(id: str):
         return {"message": "Deleted ✅"}
     except:
         return {"error": "Invalid ID"}
-
-
-
-
-
-
-
