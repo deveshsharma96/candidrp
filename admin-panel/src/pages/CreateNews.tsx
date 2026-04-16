@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from "react";
 import Editor from "../components/Editor";
 
@@ -39,7 +37,7 @@ export default function CreateNews() {
     formData.append("upload_preset", "candid_upload");
 
     const res = await fetch(
-      // "https://api.cloudinary.com/v1_1/dsxlj3waa/image/upload",
+      
       "https://api.cloudinary.com/v1_1/dsxlj3waa/image/upload",
       {
         method: "POST",
