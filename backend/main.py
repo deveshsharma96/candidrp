@@ -421,12 +421,16 @@ def send_email(name, email, phone, company, message, file_path):
             <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                     <td style="padding: 10px; font-weight: bold; width: 30%;">Name:</td>
-                    <td style="padding: 10px;">{name}</td>
+                    <td style="padding: 10px; word-break: break-word; white-space: normal;">
+                        {name}
+                    </td>
                 </tr>
 
                 <tr style="background: #f9f9f9;">
                     <td style="padding: 10px; font-weight: bold;">Email:</td>
-                    <td style="padding: 10px;">{email}</td>
+                    <td style="padding: 10px; word-break: break-word; white-space: normal;">
+                        {email}
+                    </td>
                 </tr>
 
                 <tr>
@@ -436,7 +440,9 @@ def send_email(name, email, phone, company, message, file_path):
 
                 <tr style="background: #f9f9f9;">
                     <td style="padding: 10px; font-weight: bold;">Company:</td>
-                    <td style="padding: 10px;">{company}</td>
+                    <td style="padding: 10px; word-break: break-word; white-space: normal;">
+                        {company}
+                    </td>
                 </tr>
             </table>
 
